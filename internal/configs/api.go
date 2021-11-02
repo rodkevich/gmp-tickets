@@ -27,7 +27,7 @@ type ApiConfig struct {
 }
 
 var defaultApiCfg = ApiConfig{
-	Name:              "gmp-tickets-service",
+	Name:              "public", // should match db schema
 	Host:              net.ParseIP("0.0.0.0"),
 	Port:              "12300",
 	ReadTimeout:       time.Duration(5) * time.Second,
