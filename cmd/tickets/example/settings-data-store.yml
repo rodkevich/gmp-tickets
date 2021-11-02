@@ -1,0 +1,8 @@
+Driver: postgres
+Host: localhost
+Port: "5432"
+Name: postgres
+User: postgres
+Pass: postgres
+Ssl_mode: disable
+Max_connection_pool: 5
