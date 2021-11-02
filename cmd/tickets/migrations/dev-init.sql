@@ -20,7 +20,7 @@ CREATE TABLE if not exists dev.users
     login       varchar(100)       not null unique,
     avatar_url  varchar(255) unique,
     url         varchar(255) unique,
-    name        text               not null default 'Unnamed User' unique,
+    name        text               not null default 'Unnamed User',
     type        dev.enum_user_type not null,
     admin       bool                        default false,
     created_at  timestamptz                 default now(),
