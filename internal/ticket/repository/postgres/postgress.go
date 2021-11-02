@@ -109,7 +109,7 @@ func NewDatasource(cfg *configs.Configs) (ticket.Repository, error) {
 	}
 	log.Printf("New PG datasource connected to: %v", connString)
 	for {
-		_, err := pool.Exec(context.Background(), "SELECT '"+cfg.Api.Name+".tickets'::regclass")
+		_, err := pool.Exec(context.Background(), "SELECT '"+cfg.Api.Name+".ticket'::regclass")
 		if err == nil {
 			log.Println("Database is ready")
 			return &datasource{pool}, nil
@@ -127,7 +127,7 @@ func NewDatasource(cfg *configs.Configs) (ticket.Repository, error) {
 			sleep := base + time.Duration(step)
 			time.Sleep(sleep)
 
-			_, err := pool.Exec(context.Background(), "SELECT '"+cfg.Api.Name+".tickets'::regclass")
+			_, err := pool.Exec(context.Background(), "SELECT '"+cfg.Api.Name+".ticket'::regclass")
 			if err == nil {
 				log.Println("Database is ready")
 				return nil, err
