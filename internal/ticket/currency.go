@@ -1,7 +1,7 @@
 package ticket
 
 // EnumCurrencyType int value or different currencies
-type EnumCurrencyType uint
+type EnumCurrencyType uint8
 
 const (
 	BYN EnumCurrencyType = 54
@@ -11,7 +11,6 @@ const (
 
 // IsValid can check if currency is allowed in a system.
 func (c EnumCurrencyType) IsValid() bool {
-
 	switch c {
 	case BYN, USD:
 		return true
