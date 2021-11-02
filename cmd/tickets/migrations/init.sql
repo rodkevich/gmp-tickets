@@ -1,3 +1,5 @@
+-- v0.1.1
+
 CREATE SCHEMA if not exists public;
 
 CREATE EXTENSION if not exists "uuid-ossp";
@@ -12,15 +14,15 @@ CREATE TYPE enum_user_type AS ENUM (
 
 CREATE TABLE if not exists person
 (
-    id          uuid           default uuid_generate_v4(),
-    login       varchar(255) not null unique, -- RFC 5321
+    id          uuid           not null default uuid_generate_v4(),
+    login       varchar(255)   not null unique, -- RFC 5321
     avatar_url  text unique,
-    profile_url text unique,
+    profile_url text unique    not null,
     name        varchar(255),
-    type        enum_user_type default 'Pending',
-    admin       bool           default false,
-    created_at  timestamptz    default now(),
-    modified_at timestamptz    default now(),
+    type        enum_user_type not null default 'Pending',
+    admin       bool           not null default false,
+    created_at  timestamptz    not null default now(),
+    modified_at timestamptz    not null default now(),
 
     PRIMARY KEY (id)
 );
@@ -38,6 +40,8 @@ CREATE TRIGGER update_person_modify_time
     ON person
     FOR EACH ROW
 EXECUTE PROCEDURE touch_modified();
+
+-- dummy users -----------------------------------------------------------------
 
 INSERT INTO person (id, login, avatar_url, profile_url, name, type, admin, created_at,
                     modified_at)
@@ -70,17 +74,17 @@ CREATE TYPE enum_ticket_status AS ENUM (
 
 CREATE TABLE if not exists ticket
 (
-    id           uuid        default uuid_generate_v4(),
+    id           uuid               not null default uuid_generate_v4(),
     name         varchar(150)       not null,
     full_name    varchar(255),
     description  text               not null,
     status       enum_ticket_status not null,
     owner_id     uuid               not null,
-    amount       numeric(20)        not null,
+    amount       integer            not null,
     price        numeric(100, 2),
     currency     numeric(5),
-    created_at   timestamptz default current_timestamp,
-    updated_at   timestamptz default current_timestamp,
+    created_at   timestamptz        not null default current_timestamp,
+    updated_at   timestamptz        not null default current_timestamp,
     deleted_at   timestamptz,
     published_at timestamptz,
 
@@ -109,12 +113,12 @@ EXECUTE PROCEDURE
 
 CREATE TABLE if not exists photo
 (
-    id        uuid default uuid_generate_v4(),
-    ticket_id uuid    not null,
-    is_main   bool default false,
-    presented bool default true,
-    mime_type varchar(100),
-    size_kb   integer not null,
+    id        uuid         not null default uuid_generate_v4(),
+    ticket_id uuid         not null,
+    is_main   bool         not null default false,
+    presented bool         not null default true,
+    mime_type varchar(100) not null,
+    size_kb   integer      not null,
 
     PRIMARY KEY (id),
 
