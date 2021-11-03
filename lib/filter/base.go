@@ -1,0 +1,56 @@
+package filter
+
+import (
+	"net/url"
+	"strconv"
+)
+
+const (
+	// Query types
+	queryParamFields = "fields"
+	queryParamSearch = "search"
+	// Paging settings
+	queryParamPagingDisable         = "disable_paging"
+	queryParamPage                  = "page"
+	queryParamSize                  = "size"
+	responseItemsDefaultPage        = 1
+	responseItemsDefaultSizePerPage = 20
+)
+
+type Common struct {
+	Extended      bool `json:"extended"`
+	Search        bool `json:"search"`
+	Page          int  `json:"page"`
+	Size          int  `json:"size"`
+	PagingDisable bool `json:"paging_disable"`
+}
+
+func New(queries url.Values) *Common {
+	isExtended := has(queries, queryParamFields)
+	isSearch := has(queries, queryParamSearch)
+	page, _ := strconv.Atoi(queries.Get(queryParamPage))
+	size, _ := strconv.Atoi(queries.Get(queryParamSize))
+	pagingDisable, _ := strconv.ParseBool(queries.Get(queryParamPagingDisable))
+
+	if !has(queries, queryParamSize) {
+		size = responseItemsDefaultSizePerPage
+	}
+
+	if !has(queries, queryParamPage) {
+		page = responseItemsDefaultPage
+	}
+	// offset calculation offset = (pageNumber - 1) * itemsDefaultSizePerPage + 1
+	page = (page - 1) * (size + 1)
+
+	return &Common{
+		Extended:      isExtended,
+		Search:        isSearch,
+		Page:          page,
+		Size:          size,
+		PagingDisable: pagingDisable,
+	}
+}
+
+func has(queries url.Values, param string) bool {
+	return queries.Get(param) != ""
+}
