@@ -1,4 +1,4 @@
-package ticket
+package user
 
 import (
 	"github.com/rodkevich/gmp-tickets/lib/filter"

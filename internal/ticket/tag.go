@@ -1,8 +1,11 @@
 package ticket
 
+import "github.com/google/uuid"
+
 type Tag struct {
-	Name       string `json:"name"`
-	Searchable bool   `json:"searchable"`
+	ID         uuid.UUID `json:"id"`
+	Name       string    `json:"name"`
+	Searchable bool      `json:"searchable"`
 }
 
 type Tags struct {

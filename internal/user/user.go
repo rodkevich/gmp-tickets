@@ -29,7 +29,7 @@ const (
 	EnumUserTypeBlocked
 )
 
-// IsAllowed ...
+// IsAllowed filter for roles.
 func (eut EnumUserType) IsAllowed() bool {
 	switch eut {
 	case EnumUserTypeAdministrator,
@@ -86,25 +86,17 @@ func (eut *EnumUserType) UnmarshalText(buf []byte) error {
 	return nil
 }
 
-// Value implements driver.Valuer interface.
+// Value implements driver.Valuer.
 func (eut EnumUserType) Value() (driver.Value, error) {
 	return eut.String(), nil
 }
 
-// Scan implements sql.Scanner interface.
+// Scan implements sql.Scanner.
 func (eut *EnumUserType) Scan(v interface{}) error {
 	if buf, ok := v.([]byte); ok {
 		return eut.UnmarshalText(buf)
 	}
 	return ErrInvalidEnumUserType(fmt.Sprintf("%T", v))
-}
-
-// ErrInvalidEnumUserType is the invalid EnumUserType error.
-type ErrInvalidEnumUserType string
-
-// Error satisfies the error interface.
-func (err ErrInvalidEnumUserType) Error() string {
-	return fmt.Sprintf("invalid EnumUserType(%s)", string(err))
 }
 
 type User struct {

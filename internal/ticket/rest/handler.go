@@ -1,11 +1,13 @@
 package rest
 
 import (
-	"encoding/json"
-	"golang.org/x/net/context"
-	"io/ioutil"
+	"context"
+	"database/sql"
 	"log"
 	"net/http"
+
+	"github.com/rodkevich/gmp-tickets/lib/msg"
+	"github.com/rodkevich/gmp-tickets/lib/validation"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/rodkevich/gmp-tickets/internal/ticket"
@@ -24,32 +26,6 @@ type Handler struct {
 	usage      ticket.UsageSchema
 }
 
-func NewHandler(usage ticket.UsageSchema, validation *validator.Validate) *Handler {
-	return &Handler{
-		usage:      usage,
-		validation: validation,
-	}
-}
-
-func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	var req ticket.CreationRequest
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	if err := json.Unmarshal(b, &req); err != nil {
-		log.Println(err)
-		return
-	}
-
-	resp, err := h.usage.Create(context.Background(), req)
-	if err != nil {
-		return
-	}
-	log.Println(resp)
-}
-
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	panic("implement me")
 }
@@ -64,4 +40,42 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	panic("implement me")
+}
+
+func NewHandler(usage ticket.UsageSchema, validation *validator.Validate) *Handler {
+	return &Handler{
+		usage:      usage,
+		validation: validation,
+	}
+}
+
+func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
+	var req ticket.CreationRequest
+	err := ticket.Bind(r.Body, &req)
+	if err != nil {
+		msg.ReturnClientError(w, err.Error())
+	}
+	errs := validation.Validate(h.validation, req)
+	if errs != nil {
+		msg.ReturnClientError(w, err.Error())
+		return
+	}
+	t := ticket.Parse(&req)
+	tk, err := h.usage.Create(context.Background(), t)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			msg.ReturnClientError(w, err.Error())
+			return
+		}
+		msg.ReturnServerError(w, err)
+		return
+	}
+	log.Println(tk.String())
+	// b, err := ticket.Resource(tk)
+	// if err != nil {
+	// 	msg.ReturnServerError(w, err)
+	// 	return
+	// }
+	msg.ReturnJSON(w, http.StatusCreated)
 }
