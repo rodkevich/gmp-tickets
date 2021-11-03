@@ -89,7 +89,7 @@ type Ticket struct {
 	OwnerID     uuid.UUID        `json:"owner_id"`
 	Amount      uint             `json:"amount"`
 	Price       sql.NullFloat64  `json:"price"`
-	Currency    sql.NullFloat64  `json:"currency"`
+	Currency    sql.NullInt64    `json:"currency"`
 	CreatedAt   time.Time        `json:"created_at"`
 	UpdatedAt   time.Time        `json:"updated_at"`
 	DeletedAt   sql.NullTime     `json:"deleted_at"`
@@ -99,12 +99,4 @@ type Ticket struct {
 func (t Ticket) String() string {
 	j, _ := json.MarshalIndent(t, "", "    ")
 	return string(j)
-}
-
-// ErrInvalidEnumTicketStatus ...
-type ErrInvalidEnumTicketStatus string
-
-// Error ...
-func (err ErrInvalidEnumTicketStatus) Error() string {
-	return fmt.Sprintf("EnumTicketStatus invalid: (%s)", string(err))
 }
