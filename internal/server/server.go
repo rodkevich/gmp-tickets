@@ -9,41 +9,38 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/rodkevich/gmp-tickets/lib/db"
+
+	"github.com/jackc/pgx/v4/pgxpool"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"go.uber.org/zap"
 
 	"github.com/rodkevich/gmp-tickets/internal/configs"
-	"github.com/rodkevich/gmp-tickets/internal/ticket"
-	"github.com/rodkevich/gmp-tickets/internal/ticket/repository/postgres"
-	"github.com/rodkevich/gmp-tickets/internal/ticket/rest"
 	"github.com/rodkevich/gmp-tickets/lib/validation"
 )
 
 type Server struct {
 	cfg        *configs.Configs
+	database   *pgxpool.Pool
 	router     *chi.Mux
 	httpServer *http.Server
 	validator  *validator.Validate
 	logger     *zap.Logger
 
-	ticketRepo ticket.Repository
+	// ticketRepo ticket.Repository
 	// userRepo   user.Repository
 }
 
 func (srv *Server) Initialize() {
 	srv.newConfiguration()
 	srv.newLogger()
-	srv.newDatasource()
+	srv.newDataBase()
 	srv.newValidator()
 	srv.newRouter()
 	srv.initRoutes()
 	// srv.setMiddlewares()
-}
-
-func (srv *Server) initRoutes() {
-	rest.RegisterRoutes(srv.router, srv.validator, rest.NewTicketService(srv.ticketRepo))
-	// rest.RegisterRoutes(srv.router, srv.validator, rest.NewUserService(srv.userRepo))
 }
 
 func NewServer(version string) *Server {
@@ -144,14 +141,19 @@ func (srv *Server) newLogger() {
 	// srv.logger.Error("This is an ERROR message")
 }
 
-func (srv *Server) newDatasource() {
+func (srv *Server) newDataBase() {
+
 	switch srv.cfg.Database.Driver {
 	case "postgres":
-		ticketDataSource, err := postgres.NewDatasource(srv.cfg)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		pool, err := db.NewConnectionPool(ctx, srv.cfg)
 		if err != nil {
-			log.Fatal("Datasource isn't ready")
+			log.Fatalf(err.Error())
 		}
-		srv.ticketRepo = ticketDataSource
+		srv.database = pool
+
 	case "mysql":
 		log.Fatal("Mysql not implemented yet.You must choose a valid database driver")
 	default:
