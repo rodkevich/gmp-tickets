@@ -1,14 +1,17 @@
 -- v0.1.0
+
 DROP SCHEMA public CASCADE;
 
 CREATE SCHEMA if not exists public;
 
--- extensions ------------------------------------------------------------------
+-- EXTENSIONS ------------------------------------------------------------------
+
 CREATE EXTENSION if not exists "uuid-ossp";
 
 CREATE EXTENSION if not exists "pgcrypto";
 
--- migration versions ----------------------------------------------------------
+-- MIGRATION VERSIONS ----------------------------------------------------------
+
 CREATE TABLE if not exists _schema_versions
 (
     permissions      varchar not null,
@@ -25,7 +28,8 @@ CREATE TABLE if not exists _schema_versions
     ticket_tags      varchar not null
 );
 
--- initial versions ------------------------------------------------------------
+-- INITIAL VERSIONS ------------------------------------------------------------
+
 INSERT INTO _schema_versions (users, roles, tickets, photos, profiles,
                               permissions, ticket_photos, user_roles,
                               user_subs,
@@ -34,7 +38,7 @@ VALUES ('0.0.1', '0.0.1', '0.0.1', '0.0.1', '0.0.1', '0.0.1', '0.0.1', '0.0.1', 
         '0.0.1',
         '0.0.1', '0.0.1');
 
--------------------------------- FUNCTIONS -------------------------------------
+--- COMMON FUNCTIONS -----------------------------------------------------------
 
 CREATE or replace function touch_updated_at()
     returns trigger as
@@ -45,11 +49,12 @@ begin
 end;
 $$ language 'plpgsql';
 
--------------------------------- TABLES ----------------------------------------
+--- TABLES ---------------------------------------------------------------------
 
 --- permissions ----------------------------------------------------------------
+
 CREATE TYPE enum_permissions_access_type AS ENUM
-    ('All', 'Create', 'Read', 'Update', 'Delete');
+    ('Administrate', 'Create', 'Read', 'Update', 'Delete');
 
 CREATE table if not exists permissions
 (
@@ -59,9 +64,8 @@ CREATE table if not exists permissions
     created_at timestamptz                  not null default now(),
     updated_at timestamptz                  not null default now(),
     deleted_at timestamptz,
-    CONSTRAINT permissions_pkey PRIMARY KEY (id)
+    PRIMARY KEY (id)
 );
-
 
 CREATE trigger permissions_update_updated_at
     before update
@@ -70,6 +74,7 @@ CREATE trigger permissions_update_updated_at
 EXECUTE procedure touch_updated_at();
 
 --- roles ----------------------------------------------------------------------
+
 CREATE TYPE enum_roles_entity_type AS ENUM
     ('Persistent', 'Custom');
 
@@ -92,6 +97,7 @@ CREATE trigger roles_update_updated_at
 EXECUTE procedure touch_updated_at();
 
 --- role_permissions -----------------------------------------------------------
+
 CREATE table if not exists role_permissions
 (
     id            bigserial   not null,
@@ -120,6 +126,7 @@ CREATE trigger role_permissions_update_updated_at
 EXECUTE procedure touch_updated_at();
 
 --- users ----------------------------------------------------------------------
+
 CREATE TYPE enum_users_status_type AS ENUM
     ('Active', 'Pending', 'Blocked');
 
@@ -127,6 +134,7 @@ CREATE table if not exists users
 (
     id         uuid         not null  default uuid_generate_v4(),
     login      varchar(255) not null unique,
+    email      varchar(255) not null unique,
     password   varchar(255) not null,
     status     enum_users_status_type default 'Pending'::enum_users_status_type,
     created_at timestamptz  not null  default now(),
@@ -142,6 +150,7 @@ CREATE trigger users_update_updated_at
 EXECUTE procedure touch_updated_at();
 
 --- user_roles -----------------------------------------------------------------
+
 CREATE table if not exists user_roles
 (
     id         uuid        not null default uuid_generate_v4(),
@@ -165,8 +174,9 @@ CREATE trigger user_roles_update_updated_at
 EXECUTE procedure touch_updated_at();
 
 --- user_subs ------------------------------------------------------------------
+
 CREATE TYPE enum_user_subs_target_type AS ENUM
-    ('ticket', 'user');
+    ('Ticket', 'User');
 
 CREATE table if not exists user_subs
 (
@@ -191,6 +201,7 @@ CREATE trigger user_subs_update_updated_at
 EXECUTE procedure touch_updated_at();
 
 --- profiles -------------------------------------------------------------------
+
 CREATE TYPE enum_profiles_service_type AS ENUM
     ('TicketService');
 
@@ -205,6 +216,8 @@ CREATE table if not exists profiles
     last_name    varchar(255),
     email        varchar(255),
     time_zone    smallint,
+    mobile       varchar(255),
+    phone        varchar(255),
     avatar_url   text,
     created_at   timestamptz                not null default now(),
     updated_at   timestamptz                not null default now(),
@@ -225,6 +238,7 @@ CREATE trigger profiles_update_updated_at
 EXECUTE procedure touch_updated_at();
 
 --- tickets --------------------------------------------------------------------
+
 CREATE TYPE enum_tickets_perk_type AS ENUM
     ('Draft','Regular','Premium', 'Promoted');
 
@@ -259,11 +273,13 @@ CREATE trigger tickets_update_updated_at
 EXECUTE procedure touch_updated_at();
 
 --- ticket_photos --------------------------------------------------------------
+
 CREATE table if not exists ticket_photos
 (
     id         uuid        not null default uuid_generate_v4(),
     ticket_id  uuid        not null,
     photo_id   uuid        not null,
+    main       bool        not null default false,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     deleted_at timestamptz,
@@ -282,6 +298,7 @@ CREATE trigger ticket_photos_update_updated_at
 EXECUTE procedure touch_updated_at();
 
 --- photos ---------------------------------------------------------------------
+
 CREATE TYPE enum_photos_mime_type AS ENUM
     ('image/jpeg', 'image/png', 'image/tiff');
 
@@ -303,6 +320,7 @@ CREATE trigger photos_update_updated_at
 EXECUTE procedure touch_updated_at();
 
 --- tags -----------------------------------------------------------------------
+
 CREATE table if not exists tags
 (
     id          bigserial,
@@ -322,6 +340,7 @@ CREATE trigger tags_update_updated_at
 EXECUTE procedure touch_updated_at();
 
 --- ticket_tags ----------------------------------------------------------------
+
 CREATE table if not exists ticket_tags
 (
     id         bigserial   not null,
@@ -348,4 +367,5 @@ CREATE trigger ticket_tags_update_updated_at
     on ticket_tags
     FOR EACH ROW
 EXECUTE procedure touch_updated_at();
+
 --------------------------------------------------------------------------------

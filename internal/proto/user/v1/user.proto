@@ -1,0 +1,122 @@
+syntax = "proto3";
+
+package proto.user.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "internal/user/grpc";
+
+// USER
+message User {
+  string id = 1;
+  string login = 2;
+  string password = 3;
+  string status = 4;
+  string email = 5;
+}
+
+message CreateUserRequest {
+  string login = 1;
+  string email = 2;
+  string password = 3;
+  string confirmPassword = 4;
+}
+
+message CreateUserResponse {
+  string token = 1;
+}
+
+message ReadUserRequest {
+  string user_id = 1;
+}
+
+message UpdateUserRequest {
+  User user = 1;
+}
+
+message ReadUserResponse {
+  User user = 1;
+}
+
+message DeleteUserRequest {
+  string user_id = 1;
+}
+
+message DeleteUserResponse {}
+
+message LogoutRequest {
+  string user_id = 1;
+}
+
+message LogoutResponse {}
+
+message LoginRequest {
+  string ident = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string token = 1;
+}
+
+// PROFILE
+message Profile {
+  bool active = 1;
+  string user_id = 2;
+  string service_name = 3;
+  string nickname = 4;
+  string first_name = 5;
+  string last_name = 6;
+  string email = 7;
+  string mobile = 8;
+  string phone = 9;
+  string avatar_url = 10;
+  int64 time_zone = 11;
+  google.protobuf.Timestamp createdAt = 12;
+  google.protobuf.Timestamp updatedAt = 13;
+  google.protobuf.Timestamp deletedAt = 14;
+}
+
+
+message CreateProfileRequest {
+  Profile profile = 1;
+}
+
+message CreateProfileResponse {
+  string profile_id = 1;
+}
+
+message ReadProfileRequest {
+  string profile_id = 1;
+}
+
+message UpdateProfileRequest {
+  Profile profile = 1;
+}
+
+message ReadProfileResponse {
+  Profile profile = 1;
+}
+
+message DeleteProfileRequest {
+  string profile_id = 1;
+}
+
+message DeleteProfileResponse {}
+
+// SERVICE
+service UserService {
+  rpc CreateUser (CreateUserRequest) returns (CreateUserResponse);
+  rpc ReadUser (ReadUserRequest) returns (ReadUserResponse);
+  rpc UpdateUser (UpdateUserRequest) returns (ReadUserResponse);
+  rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse);
+
+  rpc Login (LoginRequest) returns (LoginResponse);
+  rpc Logout (LogoutRequest) returns (LogoutResponse);
+
+  rpc CreateProfile (CreateProfileRequest) returns (CreateProfileResponse);
+  rpc ReadProfile (ReadProfileRequest) returns (ReadProfileResponse);
+  rpc UpdateProfile (UpdateProfileRequest) returns (ReadProfileResponse);
+  rpc DeleteProfile (DeleteProfileRequest) returns (DeleteProfileResponse);
+
+}

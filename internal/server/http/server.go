@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"encoding/json"
+	"github.com/go-chi/chi/v5/middleware"
 	"log"
 	"net/http"
 	"os"
@@ -94,6 +95,9 @@ func (srv *Server) newConfiguration() {
 
 func (srv *Server) newRouter() {
 	srv.router = chi.NewRouter()
+	srv.router.Use(middleware.RequestID)
+	srv.router.Use(middleware.Logger)
+	srv.router.Use(middleware.Recoverer)
 }
 
 func (srv *Server) newLogger() {
@@ -136,7 +140,10 @@ func (srv *Server) newLogger() {
 		log.Fatalf(err.Error())
 	}
 	// srv.logger.Debug("This is a DEBUG message")
-	// srv.logger.Info("This should have an ISO8601 based time stamp")
+	srv.logger.Info("This should have an ISO8601 based time stamp",
+		zap.Int("hello world", 3),
+		zap.Time("time test", time.Now()),
+	)
 	// srv.logger.Warn("This is a WARN message")
 	// srv.logger.Error("This is an ERROR message")
 }
