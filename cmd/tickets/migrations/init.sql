@@ -34,11 +34,22 @@ VALUES ('0.0.1', '0.0.1', '0.0.1', '0.0.1', '0.0.1', '0.0.1', '0.0.1', '0.0.1', 
         '0.0.1',
         '0.0.1', '0.0.1');
 
+-------------------------------- FUNCTIONS -------------------------------------
+
+CREATE or replace function touch_updated_at()
+    returns trigger as
+$$
+begin
+    NEW.updated_at = now();
+    return NEW;
+end;
+$$ language 'plpgsql';
+
 -------------------------------- TABLES ----------------------------------------
 
 --- permissions ----------------------------------------------------------------
 CREATE TYPE enum_permissions_access_type AS ENUM
-    ('*', 'Create', 'Read', 'Update', 'Delete');
+    ('All', 'Create', 'Read', 'Update', 'Delete');
 
 CREATE table if not exists permissions
 (
@@ -48,24 +59,15 @@ CREATE table if not exists permissions
     created_at timestamptz                  not null default now(),
     updated_at timestamptz                  not null default now(),
     deleted_at timestamptz,
-    PRIMARY KEY (id)
+    CONSTRAINT permissions_pkey PRIMARY KEY (id)
 );
 
-CREATE or replace function touch_permissions_updated_at()
-    returns trigger as
-$$
-begin
-    NEW.updated_at = now();
-    return NEW;
-end;
-$$ language 'plpgsql';
 
 CREATE trigger permissions_update_updated_at
     before update
-    on permissions
+    ON permissions
     FOR EACH ROW
-EXECUTE procedure touch_permissions_updated_at();
---------------------------------------------------------------------------------
+EXECUTE procedure touch_updated_at();
 
 --- roles ----------------------------------------------------------------------
 CREATE TYPE enum_roles_entity_type AS ENUM
@@ -83,21 +85,11 @@ CREATE table if not exists roles
     PRIMARY KEY (id)
 );
 
-CREATE or replace function touch_roles_updated_at()
-    returns trigger as
-$$
-begin
-    NEW.updated_at = now();
-    return NEW;
-end;
-$$ language 'plpgsql';
-
 CREATE trigger roles_update_updated_at
     before update
-    on roles
+    ON roles
     FOR EACH ROW
-EXECUTE procedure touch_roles_updated_at();
---------------------------------------------------------------------------------
+EXECUTE procedure touch_updated_at();
 
 --- role_permissions -----------------------------------------------------------
 CREATE table if not exists role_permissions
@@ -121,21 +113,11 @@ CREATE table if not exists role_permissions
             ON DELETE CASCADE
 );
 
-CREATE or replace function touch_role_permissions_updated_at()
-    returns trigger as
-$$
-begin
-    NEW.updated_at = now();
-    return NEW;
-end;
-$$ language 'plpgsql';
-
 CREATE trigger role_permissions_update_updated_at
     before update
     on role_permissions
     FOR EACH ROW
-EXECUTE procedure touch_role_permissions_updated_at();
---------------------------------------------------------------------------------
+EXECUTE procedure touch_updated_at();
 
 --- users ----------------------------------------------------------------------
 CREATE TYPE enum_users_status_type AS ENUM
@@ -153,21 +135,11 @@ CREATE table if not exists users
     PRIMARY KEY (id)
 );
 
-CREATE or replace function touch_users_updated_at()
-    returns trigger as
-$$
-begin
-    NEW.updated_at = now();
-    return NEW;
-end;
-$$ language 'plpgsql';
-
 CREATE trigger users_update_updated_at
     before update
     on users
     FOR EACH ROW
-EXECUTE procedure touch_users_updated_at();
---------------------------------------------------------------------------------
+EXECUTE procedure touch_updated_at();
 
 --- user_roles -----------------------------------------------------------------
 CREATE table if not exists user_roles
@@ -186,21 +158,11 @@ CREATE table if not exists user_roles
             ON DELETE CASCADE
 );
 
-CREATE or replace function touch_user_roles_updated_at()
-    returns trigger as
-$$
-begin
-    NEW.updated_at = now();
-    return NEW;
-end;
-$$ language 'plpgsql';
-
 CREATE trigger user_roles_update_updated_at
     before update
     on user_roles
     FOR EACH ROW
-EXECUTE procedure touch_user_roles_updated_at();
---------------------------------------------------------------------------------
+EXECUTE procedure touch_updated_at();
 
 --- user_subs ------------------------------------------------------------------
 CREATE TYPE enum_user_subs_target_type AS ENUM
@@ -222,40 +184,30 @@ CREATE table if not exists user_subs
             ON DELETE CASCADE
 );
 
-CREATE or replace function touch_user_subs_updated_at()
-    returns trigger as
-$$
-begin
-    NEW.updated_at = now();
-    return NEW;
-end;
-$$ language 'plpgsql';
-
 CREATE trigger user_subs_update_updated_at
     before update
     on user_subs
     FOR EACH ROW
-EXECUTE procedure touch_user_subs_updated_at();
---------------------------------------------------------------------------------
+EXECUTE procedure touch_updated_at();
 
 --- profiles -------------------------------------------------------------------
-CREATE TYPE enum_profiles__type AS ENUM
-    ('');
+CREATE TYPE enum_profiles_service_type AS ENUM
+    ('TicketService');
 
 CREATE table if not exists profiles
 (
-    id           uuid         not null default uuid_generate_v4(),
+    id           uuid                       not null default uuid_generate_v4(),
     active       bool,
-    user_id      uuid         not null,
-    service_name varchar(255) not null,
+    user_id      uuid                       not null,
+    service_name enum_profiles_service_type not null,
     nickname     varchar(255),
     first_name   varchar(255),
     last_name    varchar(255),
     email        varchar(255),
     time_zone    smallint,
     avatar_url   text,
-    created_at   timestamptz  not null default now(),
-    updated_at   timestamptz  not null default now(),
+    created_at   timestamptz                not null default now(),
+    updated_at   timestamptz                not null default now(),
     deleted_at   timestamptz,
     PRIMARY KEY (id),
 
@@ -265,21 +217,12 @@ CREATE table if not exists profiles
             ON DELETE CASCADE
 );
 
-CREATE or replace function touch_profiles_updated_at()
-    returns trigger as
-$$
-begin
-    NEW.updated_at = now();
-    return NEW;
-end;
-$$ language 'plpgsql';
 
 CREATE trigger profiles_update_updated_at
     before update
     on profiles
     FOR EACH ROW
-EXECUTE procedure touch_profiles_updated_at();
---------------------------------------------------------------------------------
+EXECUTE procedure touch_updated_at();
 
 --- tickets --------------------------------------------------------------------
 CREATE TYPE enum_tickets_perk_type AS ENUM
@@ -309,21 +252,11 @@ CREATE table if not exists tickets
             ON DELETE CASCADE
 );
 
-CREATE or replace function touch_tickets_updated_at()
-    returns trigger as
-$$
-begin
-    NEW.updated_at = now();
-    return NEW;
-end;
-$$ language 'plpgsql';
-
 CREATE trigger tickets_update_updated_at
     before update
     on tickets
     FOR EACH ROW
-EXECUTE procedure touch_tickets_updated_at();
---------------------------------------------------------------------------------
+EXECUTE procedure touch_updated_at();
 
 --- ticket_photos --------------------------------------------------------------
 CREATE table if not exists ticket_photos
@@ -342,21 +275,11 @@ CREATE table if not exists ticket_photos
             ON DELETE CASCADE
 );
 
-CREATE or replace function touch_ticket_photos_updated_at()
-    returns trigger as
-$$
-begin
-    NEW.updated_at = now();
-    return NEW;
-end;
-$$ language 'plpgsql';
-
 CREATE trigger ticket_photos_update_updated_at
     before update
     on ticket_photos
     FOR EACH ROW
-EXECUTE procedure touch_ticket_photos_updated_at();
---------------------------------------------------------------------------------
+EXECUTE procedure touch_updated_at();
 
 --- photos ---------------------------------------------------------------------
 CREATE TYPE enum_photos_mime_type AS ENUM
@@ -373,23 +296,13 @@ CREATE table if not exists photos
     PRIMARY KEY (id)
 );
 
-CREATE or replace function touch_photos_updated_at()
-    returns trigger as
-$$
-begin
-    NEW.updated_at = now();
-    return NEW;
-end;
-$$ language 'plpgsql';
-
 CREATE trigger photos_update_updated_at
     before update
     on photos
     FOR EACH ROW
-EXECUTE procedure touch_photos_updated_at();
---------------------------------------------------------------------------------
+EXECUTE procedure touch_updated_at();
 
---- tags -------------------------------------------------------------------------
+--- tags -----------------------------------------------------------------------
 CREATE table if not exists tags
 (
     id          bigserial,
@@ -402,23 +315,13 @@ CREATE table if not exists tags
 
 );
 
-CREATE or replace function touch_tags_updated_at()
-    returns trigger as
-$$
-begin
-    NEW.updated_at = now();
-    return NEW;
-end;
-$$ language 'plpgsql';
-
 CREATE trigger tags_update_updated_at
     before update
     on tags
     FOR EACH ROW
-EXECUTE procedure touch_tags_updated_at();
---------------------------------------------------------------------------------
+EXECUTE procedure touch_updated_at();
 
---- ticket_tags -------------------------------------------------------------------------
+--- ticket_tags ----------------------------------------------------------------
 CREATE table if not exists ticket_tags
 (
     id         bigserial   not null,
@@ -440,18 +343,9 @@ CREATE table if not exists ticket_tags
             ON DELETE CASCADE
 );
 
-CREATE or replace function touch_ticket_tags_updated_at()
-    returns trigger as
-$$
-begin
-    NEW.updated_at = now();
-    return NEW;
-end;
-$$ language 'plpgsql';
-
 CREATE trigger ticket_tags_update_updated_at
     before update
     on ticket_tags
     FOR EACH ROW
-EXECUTE procedure touch_ticket_tags_updated_at();
+EXECUTE procedure touch_updated_at();
 --------------------------------------------------------------------------------
