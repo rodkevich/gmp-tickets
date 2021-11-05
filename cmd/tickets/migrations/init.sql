@@ -20,26 +20,29 @@ CREATE TABLE if not exists _schema_versions
     tickets          varchar not null,
     user_roles       varchar not null,
     user_subs        varchar not null,
-    users            varchar not null
+    users            varchar not null,
+    tags             varchar not null,
+    ticket_tags      varchar not null
 );
 
 -- initial versions ------------------------------------------------------------
 INSERT INTO _schema_versions (users, roles, tickets, photos, profiles,
                               permissions, ticket_photos, user_roles,
                               user_subs,
-                              role_permissions)
+                              role_permissions, tags, ticket_tags)
 VALUES ('0.0.1', '0.0.1', '0.0.1', '0.0.1', '0.0.1', '0.0.1', '0.0.1', '0.0.1', '0.0.1',
-        '0.0.1');
+        '0.0.1',
+        '0.0.1', '0.0.1');
 
 -------------------------------- TABLES ----------------------------------------
 
 --- permissions ----------------------------------------------------------------
 CREATE TYPE enum_permissions_access_type AS ENUM
-    ('');
+    ('*', 'Create', 'Read', 'Update', 'Delete');
 
 CREATE table if not exists permissions
 (
-    id         uuid                         not null default uuid_generate_v4(),
+    id         serial                       not null,
     resource   varchar(255)                 not null,
     action     enum_permissions_access_type not null,
     created_at timestamptz                  not null default now(),
@@ -65,16 +68,17 @@ EXECUTE procedure touch_permissions_updated_at();
 --------------------------------------------------------------------------------
 
 --- roles ----------------------------------------------------------------------
-CREATE TYPE enum_roles__type AS ENUM
-    ('');
+CREATE TYPE enum_roles_entity_type AS ENUM
+    ('Persistent', 'Custom');
 
 CREATE table if not exists roles
 (
-    id          uuid         not null default uuid_generate_v4(),
-    name        varchar(255) not null,
-    description text         not null,
-    created_at  timestamptz  not null default now(),
-    updated_at  timestamptz  not null default now(),
+    id          serial                 not null,
+    type        enum_roles_entity_type not null default 'Custom'::enum_roles_entity_type,
+    name        varchar(255)           not null,
+    description text                   not null,
+    created_at  timestamptz            not null default now(),
+    updated_at  timestamptz            not null default now(),
     deleted_at  timestamptz,
     PRIMARY KEY (id)
 );
@@ -96,21 +100,24 @@ EXECUTE procedure touch_roles_updated_at();
 --------------------------------------------------------------------------------
 
 --- role_permissions -----------------------------------------------------------
-CREATE TYPE enum_role_permissions__type AS ENUM
-    ('');
-
 CREATE table if not exists role_permissions
 (
-    id         uuid        not null default uuid_generate_v4(),
-    role_id    uuid        not null default uuid_generate_v4(),
-    created_at timestamptz not null default now(),
-    updated_at timestamptz not null default now(),
-    deleted_at timestamptz,
+    id            bigserial   not null,
+    role_id       serial      not null,
+    permission_id serial      not null,
+    created_at    timestamptz not null default now(),
+    updated_at    timestamptz not null default now(),
+    deleted_at    timestamptz,
     PRIMARY KEY (id),
 
     CONSTRAINT fk_role_permissions_role_id_roles
         foreign key (role_id)
             references roles (id)
+            ON DELETE CASCADE,
+
+    CONSTRAINT fk_role_permissions_permission_id_permissions
+        foreign key (permission_id)
+            references permissions (id)
             ON DELETE CASCADE
 );
 
@@ -132,14 +139,16 @@ EXECUTE procedure touch_role_permissions_updated_at();
 
 --- users ----------------------------------------------------------------------
 CREATE TYPE enum_users_status_type AS ENUM
-    ('Pending', 'Regular', 'Privileged');
+    ('Active', 'Pending', 'Blocked');
 
 CREATE table if not exists users
 (
-    id         uuid        not null   default uuid_generate_v4(),
+    id         uuid         not null  default uuid_generate_v4(),
+    login      varchar(255) not null unique,
+    password   varchar(255) not null,
     status     enum_users_status_type default 'Pending'::enum_users_status_type,
-    created_at timestamptz not null   default now(),
-    updated_at timestamptz not null   default now(),
+    created_at timestamptz  not null  default now(),
+    updated_at timestamptz  not null  default now(),
     deleted_at timestamptz,
     PRIMARY KEY (id)
 );
@@ -161,13 +170,11 @@ EXECUTE procedure touch_users_updated_at();
 --------------------------------------------------------------------------------
 
 --- user_roles -----------------------------------------------------------------
-CREATE TYPE enum_user_roles__type AS ENUM
-    ('');
-
 CREATE table if not exists user_roles
 (
     id         uuid        not null default uuid_generate_v4(),
-    user_id    uuid        not null default uuid_generate_v4(),
+    user_id    uuid        not null,
+    role_id    uuid        not null,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     deleted_at timestamptz,
@@ -195,21 +202,22 @@ CREATE trigger user_roles_update_updated_at
 EXECUTE procedure touch_user_roles_updated_at();
 --------------------------------------------------------------------------------
 
---- user_subs -------------------------------------------------------------------------
+--- user_subs ------------------------------------------------------------------
 CREATE TYPE enum_user_subs_target_type AS ENUM
-    ('');
+    ('ticket', 'user');
 
 CREATE table if not exists user_subs
 (
     id         uuid                       not null default uuid_generate_v4(),
     target     enum_user_subs_target_type not null,
+    user_id    uuid                       not null,
     created_at timestamptz                not null default now(),
     updated_at timestamptz                not null default now(),
     deleted_at timestamptz,
     PRIMARY KEY (id),
 
     CONSTRAINT fk_user_subs_target_users
-        foreign key (id)
+        foreign key (user_id)
             references users (id)
             ON DELETE CASCADE
 );
@@ -230,20 +238,21 @@ CREATE trigger user_subs_update_updated_at
 EXECUTE procedure touch_user_subs_updated_at();
 --------------------------------------------------------------------------------
 
---- profiles -------------------------------------------------------------------------
+--- profiles -------------------------------------------------------------------
 CREATE TYPE enum_profiles__type AS ENUM
     ('');
 
 CREATE table if not exists profiles
 (
     id           uuid         not null default uuid_generate_v4(),
-    user_id      uuid         not null default uuid_generate_v4(),
-    service_name varchar(255) not null,
     active       bool,
+    user_id      uuid         not null,
+    service_name varchar(255) not null,
+    nickname     varchar(255),
     first_name   varchar(255),
     last_name    varchar(255),
     email        varchar(255),
-    time_zone    varchar(255),
+    time_zone    smallint,
     avatar_url   text,
     created_at   timestamptz  not null default now(),
     updated_at   timestamptz  not null default now(),
@@ -251,7 +260,7 @@ CREATE table if not exists profiles
     PRIMARY KEY (id),
 
     CONSTRAINT fk_profiles_user_id_users
-        foreign key (id)
+        foreign key (user_id)
             references users (id)
             ON DELETE CASCADE
 );
@@ -273,16 +282,25 @@ EXECUTE procedure touch_profiles_updated_at();
 --------------------------------------------------------------------------------
 
 --- tickets --------------------------------------------------------------------
-CREATE TYPE enum_tickets__type AS ENUM
-    ('');
+CREATE TYPE enum_tickets_perk_type AS ENUM
+    ('Draft','Regular','Premium', 'Promoted');
 
 CREATE table if not exists tickets
 (
-    id         uuid        not null,
-    owner_id   uuid        not null,
-    created_at timestamptz not null default now(),
-    updated_at timestamptz not null default now(),
-    deleted_at timestamptz,
+    id           uuid         not null,
+    owner_id     uuid         not null,
+    name         varchar(100) not null,
+    name_ext     varchar(255),
+    description  text,
+    amount       smallint     not null default 1,
+    price        float        not null,
+    currency     smallint     not null,
+    active       bool,
+    perk         enum_tickets_perk_type,
+    published_at timestamptz,
+    created_at   timestamptz  not null default now(),
+    updated_at   timestamptz  not null default now(),
+    deleted_at   timestamptz,
     PRIMARY KEY (id),
 
     CONSTRAINT fk_tickets_owner_id_users
@@ -307,21 +325,19 @@ CREATE trigger tickets_update_updated_at
 EXECUTE procedure touch_tickets_updated_at();
 --------------------------------------------------------------------------------
 
---- ticket_photos -------------------------------------------------------------------------
-CREATE TYPE enum_ticket_photos__type AS ENUM
-    ('');
-
+--- ticket_photos --------------------------------------------------------------
 CREATE table if not exists ticket_photos
 (
     id         uuid        not null default uuid_generate_v4(),
-    ticket_id  uuid        not null default uuid_generate_v4(),
+    ticket_id  uuid        not null,
+    photo_id   uuid        not null,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     deleted_at timestamptz,
     PRIMARY KEY (id),
 
     CONSTRAINT fk_ticket_photos_ticket_id_tickets
-        foreign key (id)
+        foreign key (ticket_id)
             references tickets (id)
             ON DELETE CASCADE
 );
@@ -342,23 +358,19 @@ CREATE trigger ticket_photos_update_updated_at
 EXECUTE procedure touch_ticket_photos_updated_at();
 --------------------------------------------------------------------------------
 
---- photos -------------------------------------------------------------------------
-CREATE TYPE enum_photos__type AS ENUM
-    ('');
+--- photos ---------------------------------------------------------------------
+CREATE TYPE enum_photos_mime_type AS ENUM
+    ('image/jpeg', 'image/png', 'image/tiff');
 
 CREATE table if not exists photos
 (
-    id         uuid        not null default uuid_generate_v4(),
-    owner_id   uuid        not null default uuid_generate_v4(),
-    created_at timestamptz not null default now(),
-    updated_at timestamptz not null default now(),
+    id         uuid                  not null default uuid_generate_v4(),
+    type       enum_photos_mime_type not null,
+    size_kb    int,
+    created_at timestamptz           not null default now(),
+    updated_at timestamptz           not null default now(),
     deleted_at timestamptz,
-    PRIMARY KEY (id),
-
-    CONSTRAINT fk_photos_owner_id_users
-        foreign key (id)
-            references users (id)
-            ON DELETE CASCADE
+    PRIMARY KEY (id)
 );
 
 CREATE or replace function touch_photos_updated_at()
@@ -375,4 +387,71 @@ CREATE trigger photos_update_updated_at
     on photos
     FOR EACH ROW
 EXECUTE procedure touch_photos_updated_at();
+--------------------------------------------------------------------------------
+
+--- tags -------------------------------------------------------------------------
+CREATE table if not exists tags
+(
+    id          bigserial,
+    name        varchar(255) not null,
+    description text,
+    created_at  timestamptz  not null default now(),
+    updated_at  timestamptz  not null default now(),
+    deleted_at  timestamptz,
+    PRIMARY KEY (id)
+
+);
+
+CREATE or replace function touch_tags_updated_at()
+    returns trigger as
+$$
+begin
+    NEW.updated_at = now();
+    return NEW;
+end;
+$$ language 'plpgsql';
+
+CREATE trigger tags_update_updated_at
+    before update
+    on tags
+    FOR EACH ROW
+EXECUTE procedure touch_tags_updated_at();
+--------------------------------------------------------------------------------
+
+--- ticket_tags -------------------------------------------------------------------------
+CREATE table if not exists ticket_tags
+(
+    id         bigserial   not null,
+    ticket_id  uuid        not null,
+    tag_id     bigserial   not null,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    deleted_at timestamptz,
+    PRIMARY KEY (id),
+
+    CONSTRAINT fk_ticket_tags_ticket_id_tickets
+        foreign key (ticket_id)
+            references tickets (id)
+            ON DELETE CASCADE,
+
+    CONSTRAINT fk_ticket_tags_tag_id_tags
+        foreign key (tag_id)
+            references tags (id)
+            ON DELETE CASCADE
+);
+
+CREATE or replace function touch_ticket_tags_updated_at()
+    returns trigger as
+$$
+begin
+    NEW.updated_at = now();
+    return NEW;
+end;
+$$ language 'plpgsql';
+
+CREATE trigger ticket_tags_update_updated_at
+    before update
+    on ticket_tags
+    FOR EACH ROW
+EXECUTE procedure touch_ticket_tags_updated_at();
 --------------------------------------------------------------------------------
