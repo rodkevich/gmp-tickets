@@ -95,7 +95,7 @@ func (d datasource) String() string {
 func NewDatasource(cfg *configs.Configs, pool *pgxpool.Pool) (ticket.Repository, error) {
 
 	for {
-		_, err := pool.Exec(context.Background(), "SELECT '"+cfg.Api.Name+".ticket'::regclass")
+		_, err := pool.Exec(context.Background(), "SELECT '"+cfg.Database.Schema+".tickets'::regclass")
 		if err == nil {
 			log.Println("Database is ready")
 			return &datasource{pool}, nil
@@ -113,7 +113,7 @@ func NewDatasource(cfg *configs.Configs, pool *pgxpool.Pool) (ticket.Repository,
 			sleep := base + time.Duration(step)
 			time.Sleep(sleep)
 
-			_, err := pool.Exec(context.Background(), "SELECT '"+cfg.Api.Name+".ticket'::regclass")
+			_, err := pool.Exec(context.Background(), "SELECT '"+cfg.Database.Schema+".tickets'::regclass")
 			if err == nil {
 				log.Println("Database is ready")
 				return &datasource{pool}, nil

@@ -1,0 +1,13 @@
+# cp examples/example-settings-data-store.yml settings-data-store.yml
+
+Driver: postgres
+Schema: public
+Host: localhost
+Port: "5432"
+Name: postgres
+User: postgres
+Pass: postgres
+Ssl_mode: disable
+Max_connection_pool: 10
+Min_connection_pool: 3
+

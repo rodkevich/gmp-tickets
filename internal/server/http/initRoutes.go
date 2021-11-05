@@ -1,4 +1,4 @@
-package server
+package http
 
 import (
 	ticketPG "github.com/rodkevich/gmp-tickets/internal/ticket/repository/postgres"

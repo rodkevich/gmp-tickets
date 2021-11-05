@@ -11,27 +11,25 @@ CREATE EXTENSION if not exists "pgcrypto";
 -- migration versions ----------------------------------------------------------
 CREATE TABLE if not exists _schema_versions
 (
-    users            varchar not null,
-    roles            varchar not null,
-    tickets          varchar not null,
+    permissions      varchar not null,
     photos           varchar not null,
     profiles         varchar not null,
-    permissions      varchar not null,
+    role_permissions varchar not null,
+    roles            varchar not null,
     ticket_photos    varchar not null,
+    tickets          varchar not null,
     user_roles       varchar not null,
-    user_tickets     varchar not null,
-    user_photos      varchar not null,
-    user_profiles    varchar not null,
-    role_permissions varchar not null
+    user_subs        varchar not null,
+    users            varchar not null
 );
 
 -- initial versions ------------------------------------------------------------
 INSERT INTO _schema_versions (users, roles, tickets, photos, profiles,
                               permissions, ticket_photos, user_roles,
-                              user_tickets, user_photos, user_profiles,
+                              user_subs,
                               role_permissions)
 VALUES ('0.0.1', '0.0.1', '0.0.1', '0.0.1', '0.0.1', '0.0.1', '0.0.1', '0.0.1', '0.0.1',
-        '0.0.1', '0.0.1', '0.0.1');
+        '0.0.1');
 
 -------------------------------- TABLES ----------------------------------------
 
@@ -162,106 +160,6 @@ CREATE trigger users_update_updated_at
 EXECUTE procedure touch_users_updated_at();
 --------------------------------------------------------------------------------
 
---- user_ticket ----------------------------------------------------------------
-CREATE table if not exists user_tickets
-(
-    id         bigserial   not null,
-    user_id    uuid        not null,
-    ticket_id  uuid        not null unique default uuid_generate_v4(),
-    created_at timestamptz not null        default now(),
-    updated_at timestamptz not null        default now(),
-    deleted_at timestamptz,
-    PRIMARY KEY (id),
-
-    CONSTRAINT fk_user_tickets_user_id_user
-        foreign key (user_id)
-            references users (id)
-            ON DELETE CASCADE
-);
-
-CREATE or replace function touch_user_tickets_updated_at()
-    returns trigger as
-$$
-begin
-    NEW.updated_at = now();
-    return NEW;
-end;
-$$ language 'plpgsql';
-
-CREATE trigger user_tickets_update_updated_at
-    before update
-    on user_tickets
-    FOR EACH ROW
-EXECUTE procedure touch_user_tickets_updated_at();
---------------------------------------------------------------------------------
-
---- user_photos ----------------------------------------------------------------
-CREATE table if not exists user_photos
-(
-    id         uuid        not null default uuid_generate_v4(),
-    user_id    uuid        not null default uuid_generate_v4(),
-    created_at timestamptz not null default now(),
-    updated_at timestamptz not null default now(),
-    deleted_at timestamptz,
-    PRIMARY KEY (id),
-
-    CONSTRAINT fk_user_photos_user_id_users
-        foreign key (user_id)
-            references users (id)
-            ON DELETE CASCADE
-);
-
-CREATE or replace function touch_user_photos_updated_at()
-    returns trigger as
-$$
-begin
-    NEW.updated_at = now();
-    return NEW;
-end;
-$$ language 'plpgsql';
-
-CREATE trigger user_photos_update_updated_at
-    before update
-    on user_photos
-    FOR EACH ROW
-EXECUTE procedure touch_user_photos_updated_at();
---------------------------------------------------------------------------------
-
---- user_profiles --------------------------------------------------------------
-CREATE TYPE enum_user_profiles__type AS ENUM
-    ('');
-
-CREATE table if not exists user_profiles
-(
-    id         uuid        not null default uuid_generate_v4(),
-    user_id    uuid        not null default uuid_generate_v4(),
-    created_at timestamptz not null default now(),
-    updated_at timestamptz not null default now(),
-    deleted_at timestamptz,
-    PRIMARY KEY (id),
-
-    CONSTRAINT fk_user_profiles_user_id_users
-        foreign key (user_id)
-            references users (id)
-            ON DELETE CASCADE
-);
-
-CREATE or replace function touch_user_profiles_updated_at()
-    returns trigger as
-$$
-begin
-    NEW.updated_at = now();
-    return NEW;
-end;
-$$ language 'plpgsql';
-
-CREATE trigger user_profiles_update_updated_at
-    before update
-    on user_profiles
-    FOR EACH ROW
-EXECUTE procedure touch_user_profiles_updated_at();
---------------------------------------------------------------------------------
-
 --- user_roles -----------------------------------------------------------------
 CREATE TYPE enum_user_roles__type AS ENUM
     ('');
@@ -297,6 +195,40 @@ CREATE trigger user_roles_update_updated_at
 EXECUTE procedure touch_user_roles_updated_at();
 --------------------------------------------------------------------------------
 
+--- user_subs -------------------------------------------------------------------------
+CREATE TYPE enum_user_subs_target_type AS ENUM
+    ('');
+
+CREATE table if not exists user_subs
+(
+    id         uuid                       not null default uuid_generate_v4(),
+    target     enum_user_subs_target_type not null,
+    created_at timestamptz                not null default now(),
+    updated_at timestamptz                not null default now(),
+    deleted_at timestamptz,
+    PRIMARY KEY (id),
+
+    CONSTRAINT fk_user_subs_target_users
+        foreign key (id)
+            references users (id)
+            ON DELETE CASCADE
+);
+
+CREATE or replace function touch_user_subs_updated_at()
+    returns trigger as
+$$
+begin
+    NEW.updated_at = now();
+    return NEW;
+end;
+$$ language 'plpgsql';
+
+CREATE trigger user_subs_update_updated_at
+    before update
+    on user_subs
+    FOR EACH ROW
+EXECUTE procedure touch_user_subs_updated_at();
+--------------------------------------------------------------------------------
 
 --- profiles -------------------------------------------------------------------------
 CREATE TYPE enum_profiles__type AS ENUM
@@ -356,11 +288,6 @@ CREATE table if not exists tickets
     CONSTRAINT fk_tickets_owner_id_users
         foreign key (owner_id)
             references users (id)
-            ON DELETE CASCADE,
-
-    CONSTRAINT fk_tickets_id_user_tickets
-        foreign key (id)
-            references user_tickets (ticket_id)
             ON DELETE CASCADE
 );
 

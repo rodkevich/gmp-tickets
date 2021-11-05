@@ -102,13 +102,15 @@ func (eut *EnumUserType) Scan(v interface{}) error {
 type User struct {
 	ID         uuid.UUID      `json:"id"`
 	Login      string         `json:"login"`
-	AvatarURL  sql.NullString `json:"avatar_url"`
-	ProfileURL string         `json:"profile_url"`
-	Name       sql.NullString `json:"name"`
+	Password   string         `json:"password"` // should be hashed one day :)
 	Type       EnumUserType   `json:"type"`
 	Admin      bool           `json:"admin"`
+	ProfileURL string         `json:"profile_url"`
+	Name       sql.NullString `json:"name"`
+	AvatarURL  sql.NullString `json:"avatar_url"`
 	CreatedAt  time.Time      `json:"created_at"`
-	ModifiedAt time.Time      `json:"modified_at"`
+	UpdatedAt  time.Time      `json:"updated_at"`
+	DeletedAt  sql.NullTime   `json:"deleted_at"`
 }
 
 func (u User) String() string {

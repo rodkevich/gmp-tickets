@@ -13,6 +13,7 @@ const dbCfgFileName = "settings-data-store.yml"
 
 type DatabaseConfig struct {
 	Driver             string `yaml:"Driver"`
+	Schema             string `yaml:"Schema"`
 	Host               string `yaml:"Host"`
 	Port               string `yaml:"Port"`
 	Name               string `yaml:"Name"`
@@ -20,17 +21,20 @@ type DatabaseConfig struct {
 	Pass               string `yaml:"Pass"`
 	SslMode            string `yaml:"Ssl_mode"`
 	MaxPoolConnections int    `yaml:"Max_connection_pool"`
+	MinPoolConnections int    `yaml:"Min_connection_pool"`
 }
 
 var defaultDatabaseConfig = DatabaseConfig{
 	Driver:             "postgres",
+	Schema:             "public",
 	Host:               "localhost",
 	Port:               "5432",
 	Name:               "postgres",
 	User:               "postgres",
 	Pass:               "postgres",
 	SslMode:            "disable",
-	MaxPoolConnections: 5,
+	MaxPoolConnections: 10,
+	MinPoolConnections: 3,
 }
 
 func (cfg DatabaseConfig) String() string {

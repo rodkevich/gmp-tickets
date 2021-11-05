@@ -13,7 +13,7 @@ func NewConnectionPool(ctx context.Context, cfg *configs.Configs) (pool *pgxpool
 
 	var connString string
 	connString = fmt.Sprintf(
-		"%s://%s/%s?sslmode=%s&user=%s&password=%s&pool_max_conns=%v",
+		"%s://%s/%s?sslmode=%s&user=%s&password=%s&pool_max_conns=%v&pool_min_conns=%v",
 		cfg.Database.Driver,
 		cfg.Database.Host,
 		cfg.Database.Name,
@@ -21,8 +21,8 @@ func NewConnectionPool(ctx context.Context, cfg *configs.Configs) (pool *pgxpool
 		cfg.Database.User,
 		cfg.Database.Pass,
 		cfg.Database.MaxPoolConnections,
+		cfg.Database.MinPoolConnections,
 	)
-
 	pool, err = pgxpool.Connect(ctx, connString)
 
 	if err != nil {

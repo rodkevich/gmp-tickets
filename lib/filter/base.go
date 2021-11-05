@@ -29,24 +29,25 @@ func New(queries url.Values) *Common {
 	isExtended := has(queries, queryParamFields)
 	isSearch := has(queries, queryParamSearch)
 	page, _ := strconv.Atoi(queries.Get(queryParamPage))
-	size, _ := strconv.Atoi(queries.Get(queryParamSize))
+	sizePerPage, _ := strconv.Atoi(queries.Get(queryParamSize))
 	pagingDisable, _ := strconv.ParseBool(queries.Get(queryParamPagingDisable))
 
 	if !has(queries, queryParamSize) {
-		size = responseItemsDefaultSizePerPage
+		sizePerPage = responseItemsDefaultSizePerPage
 	}
 
 	if !has(queries, queryParamPage) {
 		page = responseItemsDefaultPage
 	}
-	// offset calculation offset = (pageNumber - 1) * itemsDefaultSizePerPage + 1
-	page = (page - 1) * (size + 1)
+	// offset calculation:
+	// page = (page - 1) * sizePerPage + 1
+	page = (page - 1) * sizePerPage
 
 	return &Common{
 		Extended:      isExtended,
 		Search:        isSearch,
 		Page:          page,
-		Size:          size,
+		Size:          sizePerPage,
 		PagingDisable: pagingDisable,
 	}
 }
