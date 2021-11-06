@@ -1,0 +1,16 @@
+{
+  "id": "086d8a75-158c-475d-b4d8-63e8b2f04058",
+  "owner_id": "5ec76e8e-1a90-429b-ba26-61244be95282",
+  "name": "some na  me",
+  "name_ext": null,
+  "description": null,
+  "amount": 1,
+  "price": 11,
+  "currency": 253,
+  "active": null,
+  "perk": "Draft",
+  "published_at": null,
+  "created_at": null,
+  "updated_at": null,
+  "deleted_at": null
+}
