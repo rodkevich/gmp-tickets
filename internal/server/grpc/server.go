@@ -8,60 +8,60 @@ import (
 
 	googleGRPC "google.golang.org/grpc"
 
-	"github.com/rodkevich/gmp-tickets/internal/user/grpc"
+	userGRPC "github.com/rodkevich/gmp-tickets/internal/grpcz/user"
 )
 
 // GRPCServer base type
 type GRPCServer struct {
-	grpc.UnimplementedUserServiceServer
+	userGRPC.UnimplementedUserServiceServer
 }
 
-func (s *GRPCServer) CreateUser(ctx context.Context, request *grpc.CreateUserRequest) (*grpc.CreateUserResponse, error) {
+func (s *GRPCServer) CreateUser(ctx context.Context, request *userGRPC.CreateUserRequest) (*userGRPC.CreateUserResponse, error) {
 
-	return &grpc.CreateUserResponse{Token: "may be sessions ... ?"}, nil
+	return &userGRPC.CreateUserResponse{Token: "may be sessions ... ?"}, nil
 }
 
-func (s *GRPCServer) ReadUser(ctx context.Context, request *grpc.ReadUserRequest) (*grpc.ReadUserResponse, error) {
+func (s *GRPCServer) ReadUser(ctx context.Context, request *userGRPC.ReadUserRequest) (*userGRPC.ReadUserResponse, error) {
 
-	return &grpc.ReadUserResponse{}, nil
+	return &userGRPC.ReadUserResponse{}, nil
 }
 
-func (s *GRPCServer) UpdateUser(ctx context.Context, request *grpc.UpdateUserRequest) (*grpc.ReadUserResponse, error) {
-	return &grpc.ReadUserResponse{User: nil}, nil
+func (s *GRPCServer) UpdateUser(ctx context.Context, request *userGRPC.UpdateUserRequest) (*userGRPC.ReadUserResponse, error) {
+	return &userGRPC.ReadUserResponse{User: nil}, nil
 }
 
-func (s *GRPCServer) DeleteUser(ctx context.Context, request *grpc.DeleteUserRequest) (*grpc.DeleteUserResponse, error) {
+func (s *GRPCServer) DeleteUser(ctx context.Context, request *userGRPC.DeleteUserRequest) (*userGRPC.DeleteUserResponse, error) {
 
-	return &grpc.DeleteUserResponse{}, nil
+	return &userGRPC.DeleteUserResponse{}, nil
 }
 
-func (s *GRPCServer) Login(ctx context.Context, request *grpc.LoginRequest) (*grpc.LoginResponse, error) {
-	return &grpc.LoginResponse{Token: "may be sessions ... ?"}, nil
+func (s *GRPCServer) Login(ctx context.Context, request *userGRPC.LoginRequest) (*userGRPC.LoginResponse, error) {
+	return &userGRPC.LoginResponse{Token: "may be sessions ... ?"}, nil
 }
 
-func (s *GRPCServer) Logout(ctx context.Context, request *grpc.LogoutRequest) (*grpc.LogoutResponse, error) {
+func (s *GRPCServer) Logout(ctx context.Context, request *userGRPC.LogoutRequest) (*userGRPC.LogoutResponse, error) {
 
-	return &grpc.LogoutResponse{}, nil // may be outdated token ?
+	return &userGRPC.LogoutResponse{}, nil // may be outdated token ?
 }
 
-func (s *GRPCServer) CreateProfile(ctx context.Context, request *grpc.CreateProfileRequest) (*grpc.CreateProfileResponse, error) {
+func (s *GRPCServer) CreateProfile(ctx context.Context, request *userGRPC.CreateProfileRequest) (*userGRPC.CreateProfileResponse, error) {
 
-	return &grpc.CreateProfileResponse{}, nil
+	return &userGRPC.CreateProfileResponse{}, nil
 }
 
-func (s *GRPCServer) ReadProfile(ctx context.Context, request *grpc.ReadProfileRequest) (*grpc.ReadProfileResponse, error) {
+func (s *GRPCServer) ReadProfile(ctx context.Context, request *userGRPC.ReadProfileRequest) (*userGRPC.ReadProfileResponse, error) {
 
-	return &grpc.ReadProfileResponse{}, nil
+	return &userGRPC.ReadProfileResponse{}, nil
 }
 
-func (s *GRPCServer) UpdateProfile(ctx context.Context, request *grpc.UpdateProfileRequest) (*grpc.ReadProfileResponse, error) {
+func (s *GRPCServer) UpdateProfile(ctx context.Context, request *userGRPC.UpdateProfileRequest) (*userGRPC.ReadProfileResponse, error) {
 
-	return &grpc.ReadProfileResponse{}, nil
+	return &userGRPC.ReadProfileResponse{}, nil
 }
 
-func (s *GRPCServer) DeleteProfile(ctx context.Context, request *grpc.DeleteProfileRequest) (*grpc.DeleteProfileResponse, error) {
+func (s *GRPCServer) DeleteProfile(ctx context.Context, request *userGRPC.DeleteProfileRequest) (*userGRPC.DeleteProfileResponse, error) {
 
-	return &grpc.DeleteProfileResponse{}, nil
+	return &userGRPC.DeleteProfileResponse{}, nil
 }
 
 // Run start a server
@@ -81,7 +81,7 @@ func startApp(address string) {
 	// 	log.Fatal(err)
 	// }
 	// register services
-	grpc.RegisterUserServiceServer(s, grpcUsersServer)
+	userGRPC.RegisterUserServiceServer(s, grpcUsersServer)
 
 	usersInstance, err := grpcUsersServer.Run(address)
 	fmt.Println("Server is running")

@@ -7,7 +7,7 @@ ENV CGO_ENABLED=0
 ENV GOOS=linux
 
 WORKDIR /go/src/github.com/rodkevich/gmp-tickets
-COPY .. .
+COPY ../.. .
 RUN go get ./...
 WORKDIR /go/src/github.com/rodkevich/...
 

@@ -15,34 +15,17 @@ type datasource struct {
 	db *pgxpool.Pool
 }
 
-const (
-	Select     = "SELECT () FROM tickets"
-	SelectByID = "SELECT () FROM tickets"
-	Update     = "UPDATE"
-	Delete     = "DELETE"
-	Search     = "SELECT () FROM tickets"
-)
-
-// INSERT INTO public.tickets (id, name, full_name, description, status, owner_id, amount,
-// price, currency, created_at, updated_at, deleted_at,
-// published_at)
-// VALUES (DEFAULT, 'test_ticket', 'test_ticket_full_name', 'test_ticket_description',
-// 'active', 1, 22, 333.33, 251, DEFAULT, null, null, null);
-
-const InsertNewPhoto = `
-INSERT INTO public.photo (id, ticket_id, is_main, presented, mime_type, size_kb)
-VALUES (
-DEFAULT, $1, DEFAULT, DEFAULT, $2, $3);
-`
+func (d datasource) String() string {
+	return "Ticket Postgres"
+}
 
 const InsertNewTicket = `
-INSERT INTO ticket
-(name, full_name, description, status, owner_id, amount, price, currency)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-RETURNING id;
-`
+INSERT INTO tickets
+(owner_id, name_short, name_ext, description, amount, price, currency, active, perk)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::enum_tickets_perk_type)
+RETURNING id`
 
-func (d *datasource) Create(ctx context.Context, arg *ticket.Ticket) (id uuid.UUID, err error) {
+func (d *datasource) Create(ctx context.Context, t *ticket.Ticket) (rtn uuid.UUID, err error) {
 
 	tx, err := d.db.Begin(ctx)
 	if err != nil {
@@ -52,14 +35,15 @@ func (d *datasource) Create(ctx context.Context, arg *ticket.Ticket) (id uuid.UU
 	defer tx.Rollback(ctx)
 	err = tx.QueryRow(
 		ctx, InsertNewTicket,
-		arg.Name,
-		arg.FullName,
-		arg.Description,
-		arg.Status,
-		arg.OwnerID,
-		arg.Amount,
-		arg.Price,
-		arg.Currency).Scan(&id)
+		t.OwnerID,
+		t.NameShort,
+		t.NameExt,
+		t.Description,
+		t.Amount,
+		t.Price,
+		t.Currency,
+		t.Active,
+		t.Perk).Scan(&rtn)
 	err = tx.Commit(ctx)
 	if err != nil {
 		log.Println(err)
@@ -68,28 +52,46 @@ func (d *datasource) Create(ctx context.Context, arg *ticket.Ticket) (id uuid.UU
 	return
 }
 
-func (d *datasource) List(ctx context.Context, f *ticket.Filter) ([]*ticket.Ticket, error) {
+const ReadTicket = `
+SELECT
+id, owner_id, name_short, name_ext,
+description, amount, price, currency, active, ` + ` published_at, created_at, updated_at, deleted_at
+FROM tickets
+WHERE id = $1
+LIMIT 1;
+`
+
+// plus = perk::varchar/text/ etc..,
+func (d *datasource) Read(ctx context.Context, id uuid.UUID) (*ticket.Ticket, error) {
+	var t ticket.Ticket
+	err := d.db.QueryRow(
+		ctx, ReadTicket,
+		id,
+	).Scan(
+		&t.ID, &t.OwnerID, &t.NameShort, &t.NameExt, &t.Description,
+		&t.Amount, &t.Price, &t.Currency, &t.Active,
+		// &t.Perk, TODO: find how to implement encode / decode `pgtypes`
+		&t.PublishedAt, &t.CreatedAt, &t.UpdatedAt, &t.DeletedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &t, nil
+}
+
+func (d datasource) List(ctx context.Context, f *ticket.Filter) (rtn []*ticket.Ticket, err error) {
 	panic("implement me")
 }
 
-func (d *datasource) Read(ctx context.Context, ticketID uuid.UUID) (*ticket.Ticket, error) {
+func (d datasource) Update(ctx context.Context, t *ticket.Ticket) (err error) {
 	panic("implement me")
 }
 
-func (d *datasource) Update(ctx context.Context, ticket *ticket.Ticket) error {
+func (d datasource) Delete(ctx context.Context, id uuid.UUID) (err error) {
 	panic("implement me")
 }
 
-func (d *datasource) Delete(ctx context.Context, ticketID uuid.UUID) error {
+func (d datasource) Search(ctx context.Context, f *ticket.Filter) (rtn []*ticket.Ticket, err error) {
 	panic("implement me")
-}
-
-func (d *datasource) Search(ctx context.Context, req *ticket.Filter) ([]*ticket.Ticket, error) {
-	panic("implement me")
-}
-
-func (d datasource) String() string {
-	return "Ticket Postgres"
 }
 
 func NewDatasource(cfg *configs.Configs, pool *pgxpool.Pool) (ticket.Repository, error) {

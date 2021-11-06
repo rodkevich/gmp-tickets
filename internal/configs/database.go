@@ -16,7 +16,7 @@ type DatabaseConfig struct {
 	Schema             string `yaml:"Schema"`
 	Host               string `yaml:"Host"`
 	Port               string `yaml:"Port"`
-	Name               string `yaml:"Name"`
+	Name               string `yaml:"NameShort"`
 	User               string `yaml:"User"`
 	Pass               string `yaml:"Pass"`
 	SslMode            string `yaml:"Ssl_mode"`

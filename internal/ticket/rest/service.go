@@ -18,11 +18,12 @@ func NewTicketService(repo ticket.Repository) *ticketService {
 
 func (ts ticketService) Create(ctx context.Context, t *ticket.Ticket) (rtn *ticket.Ticket, err error) {
 	ID, err := ts.repo.Create(ctx, t)
+	log.Println(ID)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	rtn, err = ts.Read(ctx, ID)
+	rtn, err = ts.repo.Read(ctx, ID)
 	if err != nil {
 		log.Println(err)
 		return
@@ -34,7 +35,7 @@ func (ts ticketService) List(ctx context.Context, f *ticket.Filter) ([]*ticket.T
 	panic("implement me")
 }
 
-func (ts ticketService) Read(ctx context.Context, ticketID uuid.UUID) (*ticket.Ticket, error) {
+func (ts ticketService) Read(ctx context.Context, ticketID uuid.UUID) (rtn *ticket.Ticket, err error) {
 	panic("implement me")
 }
 

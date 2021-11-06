@@ -14,7 +14,7 @@ import (
 const apiCfgFileName = "settings-api.yml"
 
 type ApiConfig struct {
-	Name              string        `yaml:"Name"`
+	Name              string        `yaml:"NameShort"`
 	Host              net.IP        `yaml:"Host"`
 	Port              string        `yaml:"Port"`
 	ReadTimeout       time.Duration `yaml:"Read_timeout"`

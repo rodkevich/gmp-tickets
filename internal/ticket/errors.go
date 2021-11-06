@@ -2,10 +2,10 @@ package ticket
 
 import "fmt"
 
-// ErrInvalidEnumTicketStatus ...
-type ErrInvalidEnumTicketStatus string
+// ErrInvalidTicketPerk ...
+type ErrInvalidTicketPerk string
 
 // Error ...
-func (err ErrInvalidEnumTicketStatus) Error() string {
-	return fmt.Sprintf("EnumTicketStatus invalid: (%s)", string(err))
+func (err ErrInvalidTicketPerk) Error() string {
+	return fmt.Sprintf("Ticket Perk invalid: (%s)", string(err))
 }

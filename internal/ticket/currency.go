@@ -1,7 +1,12 @@
 package ticket
 
+import (
+	"fmt"
+	"strconv"
+)
+
 // EnumCurrencyType int value or different currencies
-type EnumCurrencyType uint8
+type EnumCurrencyType uint16
 
 const (
 	BYN EnumCurrencyType = 54
@@ -9,7 +14,7 @@ const (
 	EUR EnumCurrencyType = 93 // not yet allowed by isValid()
 )
 
-// IsValid can check if currency is allowed in a system.
+// IsValid check if currency is allowed in a system.
 func (c EnumCurrencyType) IsValid() bool {
 	switch c {
 	case BYN, USD:
@@ -18,16 +23,45 @@ func (c EnumCurrencyType) IsValid() bool {
 	return false
 }
 
-// // CurrencyToString ...
-// func CurrencyToString(c Currency) string {
-//
-// 	switch c {
-// 	case BYN:
-// 		return "Candy wrappers"
-// 	case USD:
-// 		return "Money"
-// 	case EUR:
-// 		return "Not yet supported"
-// 	}
-// 	return "ErrorCase"
-// }
+func (c *EnumCurrencyType) UnmarshalJSON(b []byte) error {
+	if string(b) == "null" {
+		return nil
+	}
+	if c == nil {
+		return fmt.Errorf("nil receiver passed to UnmarshalJSON")
+	}
+
+	if ci, err := strconv.ParseUint(string(b), 10, 16); err == nil {
+		rtn := EnumCurrencyType(ci)
+		if !rtn.IsValid() {
+			return fmt.Errorf("invalid currency: %q", ci)
+		}
+
+		*c = rtn
+		return nil
+	}
+
+	if jc, ok := StringToCurrency[string(b)]; ok {
+		*c = jc
+		return nil
+	}
+	return fmt.Errorf("invalid currency: %q", string(b))
+}
+
+var StringToCurrency = map[string]EnumCurrencyType{
+	`"CANDY_WRAPPERS"`: BYN,
+	`"MONEY"`:          USD,
+}
+
+func (c EnumCurrencyType) String() string {
+
+	switch c {
+	case BYN:
+		return "CANDY_WRAPPERS"
+	case USD:
+		return "MONEY"
+	case EUR:
+		return "NOT_YET_SUPPORTED_CURRENCY"
+	}
+	return "ERROR_CASE"
+}

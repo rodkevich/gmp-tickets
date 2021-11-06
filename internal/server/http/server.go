@@ -140,10 +140,10 @@ func (srv *Server) newLogger() {
 		log.Fatalf(err.Error())
 	}
 	// srv.logger.Debug("This is a DEBUG message")
-	srv.logger.Info("This should have an ISO8601 based time stamp",
-		zap.Int("hello world", 3),
-		zap.Time("time test", time.Now()),
-	)
+	// srv.logger.Info("This should have an ISO8601 based time stamp",
+	// 	zap.Int("hello world", 3),
+	// 	zap.Time("time test", time.Now()),
+	// )
 	// srv.logger.Warn("This is a WARN message")
 	// srv.logger.Error("This is an ERROR message")
 }
